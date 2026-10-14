@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAR Intelligence Command Center</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+:root {
+    --bg: #0b0f19;
+    --panel: #111827;
+    --panel2: #151e2d;
+    --border: #263244;
+    --cyan: #00e5ff;
+    --red: #ff3b30;
+    --amber: #ff9500;
+    --green: #20d889;
+    --white: #f0f4f8;
+    --muted: #7f8da3;
+    --mono: "JetBrains Mono", monospace;
+    --sans: "Inter", sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--sans);
+    overflow: hidden;
+}
+
+button {
+    font-family: inherit;
+}
+
+.app {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 64px 1fr 34px;
+}
+
+/* HEADER */
+
+.header {
+    background: #0d1421;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    z-index: 1000;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--cyan);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--cyan);
+    font-size: 20px;
+    box-shadow: 0 0 15px rgba(0,229,255,.2);
+}
+
+.brand-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.brand-sub {
+    color: var(--muted);
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+.header-center {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+}
+
+.status {
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: 1px solid;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+}
+
+.live {
+    color: var(--green);
+    border-color: rgba(32,216,137,.35);
+    background: rgba(32,216,137,.08);
+}
+
+.signal {
+    color: var(--cyan);
+    border-color: rgba(0,229,255,.3);
+    background: rgba(0,229,255,.06);
+}
+
+.clock {
+    font-family: var(--mono);
+    color: #c5cfdd;
+    font-size: 12px;
+}
+
+.emergency-btn {
+    background: rgba(255,59,48,.12);
+    color: #ff6b62;
+    border: 1px solid rgba(255,59,48,.5);
+    padding: 9px 13px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.emergency-btn:hover {
+    background: var(--red);
+    color: white;
+}
+
+/* MAIN */
+
+.main {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 280px minmax(0,1fr) 310px;
+}
+
+/* SIDEBARS */
+
+.sidebar {
+    background: #0e1522;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 13px;
+}
+
+.right {
+    border-right: none;
+    border-left: 1px solid var(--border);
+}
+
+.section-title {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin: 4px 0 10px;
+}
+
+.card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    margin-bottom: 10px;
+    padding: 11px;
+}
+
+.aircraft-id {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.aircraft-name {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.badge {
+    font-size: 9px;
+    padding: 4px 6px;
+    border-radius: 5px;
+    background: rgba(255,59,48,.12);
+    color: #ff6b62;
+    border: 1px solid rgba(255,59,48,.25);
+}
+
+.telemetry {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.metric {
+    background: #0c1420;
+    border: 1px solid #1c293a;
+    border-radius: 7px;
+    padding: 8px;
+}
+
+.metric-label {
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: .8px;
+}
+
+.metric-value {
+    font-family: var(--mono);
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.progress {
+    height: 5px;
+    background: #202c3c;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 7px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 72%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+}
+
+.feed {
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1.8;
+    color: #9eabbc;
+}
+
+.feed span {
+    color: var(--green);
+}
+
+/* MAP */
+
+.map-area {
+    position: relative;
+    min-width: 0;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    background: #08101b;
+}
+
+.map-overlay {
+    position: absolute;
+    z-index: 500;
+    pointer-events: none;
+}
+
+.map-title {
+    top: 15px;
+    left: 15px;
+    background: rgba(11,15,25,.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    backdrop-filter: blur(10px);
+}
+
+.map-title strong {
+    font-size: 12px;
+}
+
+.map-title div {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+.legend {
+    left: 15px;
+    bottom: 15px;
+    background: rgba(11,15,25,.92);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 8px;
+    width: 190px;
+}
+
+.legend-title {
+    font-size: 9px;
+    color: var(--muted);
+    margin-bottom: 7px;
+}
+
+.gradient {
+    height: 8px;
+    border-radius: 5px;
+    background: linear-gradient(
+        90deg,
+        #0066ff,
+        #00e5ff,
+        #20d889,
+        #ffe600,
+        #ff9500,
+        #ff3b30
+    );
+}
+
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8px;
+    margin-top: 4px;
+    color: var(--muted);
+}
+
+.map-controls {
+    right: 15px;
+    bottom: 15px;
+    display: flex;
+    gap: 6px;
+    pointer-events: auto;
+}
+
+.map-btn {
+    background: rgba(11,15,25,.92);
+    color: var(--white);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 9px;
+    cursor: pointer;
+}
+
+.map-btn:hover,
+.map-btn.active {
+    color: var(--cyan);
+    border-color: var(--cyan);
+}
+
+/* RIGHT */
+
+.confidence {
+    text-align: center;
+}
+
+.confidence-number {
+    font-family: var(--mono);
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--red);
+}
+
+.confidence-label {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.big-progress {
+    height: 8px;
+    background: #202b3a;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.big-progress div {
+    width: 87%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--amber), var(--red));
+    box-shadow: 0 0 12px rgba(255,59,48,.5);
+}
+
+.priority {
+    border: 1px solid rgba(255,59,48,.35);
+    background: rgba(255,59,48,.07);
+}
+
+.priority h3 {
+    margin: 0;
+    color: #ff6b62;
+    font-size: 13px;
+}
+
+.priority .sector {
+    font-family: var(--mono);
+    font-size: 24px;
+    margin: 8px 0;
+}
+
+.factor {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    margin: 7px 0;
+    color: #aeb9c7;
+}
+
+.factor b {
+    color: var(--white);
+}
+
+.action {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: #162131;
+    color: var(--white);
+    padding: 10px;
+    margin-bottom: 7px;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.action:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+.action.primary {
+    background: rgba(0,229,255,.08);
+    border-color: rgba(0,229,255,.35);
+    color: var(--cyan);
+}
+
+/* FOOTER */
+
+.footer {
+    background: #0a111c;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-family: var(--mono);
+    font-size: 8px;
+    color: #8d9aac;
+}
+
+.footer-left,
+.footer-right {
+    display: flex;
+    gap: 16px;
+}
+
+.health {
+    color: var(--green);
+}
+
+/* MODAL */
+
+.modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.72);
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.modal {
+    width: min(600px, 90vw);
+    max-height: 85vh;
+    overflow: auto;
+    background: #101826;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+
+.modal h2 {
+    margin-top: 0;
+}
+
+.close {
+    float: right;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.report {
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 1.8;
+    color: #b9c5d3;
+    white-space: pre-wrap;
+}
+
+/* CUSTOM AIRCRAFT ICON */
+
+.aircraft-marker {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--cyan);
+    font-size: 20px;
+    background: rgba(0,229,255,.12);
+    border: 1px solid var(--cyan);
+    box-shadow:
+        0 0 0 6px rgba(0,229,255,.05),
+        0 0 20px rgba(0,229,255,.5);
+}
+
+/* RESPONSIVE */
+
+@media(max-width: 1100px) {
+    .main {
+        grid-template-columns: 230px minmax(0,1fr);
+    }
+
+    .right {
+        display: none;
+    }
+}
+
+@media(max-width: 720px) {
+    body {
+        overflow: auto;
+    }
+
+    .app {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .header-center {
+        display: none;
+    }
+
+    .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 330px 500px;
+    }
+
+    .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .map-area {
+        height: 500px;
+    }
+
+    .footer {
+        overflow: hidden;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header class="header">
+
+    <div class="brand">
+        <div class="logo">✈</div>
+        <div>
+            <div class="brand-title">SAR INTELLIGENCE</div>
+            <div class="brand-sub">AIRCRAFT SEARCH & RESCUE COMMAND CENTER</div>
+        </div>
+    </div>
+
+    <div class="header-center">
+        <div class="status live">● LIVE MISSION</div>
+        <div class="status signal" id="signalStatus">SIGNAL 72%</div>
+        <div class="clock" id="clock">00:00:00 UTC</div>
+    </div>
+
+    <button class="emergency-btn" onclick="emergencyMode()">
+        🚨 EMERGENCY MODE
+    </button>
+
+</header>
+
+<main class="main">
+
+<!-- LEFT SIDEBAR -->
+
+<aside class="sidebar">
+
+    <div class="section-title">AIRCRAFT TELEMETRY</div>
+
+    <div class="card">
+
+        <div class="aircraft-id">
+            <div class="aircraft-name">AX-204</div>
+            <div class="badge">CRITICAL</div>
+        </div>
+
+        <div style="font-size:9px;color:#718096;margin-top:4px">
+            Airbus A320 • SAR Mission Alpha
+        </div>
+
+        <div class="telemetry">
+
+            <div class="metric">
+                <div class="metric-label">LATITUDE</div>
+                <div class="metric-value" id="lat">13.0827° N</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">LONGITUDE</div>
+                <div class="metric-value" id="lon">80.2707° E</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">ALTITUDE</div>
+                <div class="metric-value" id="alt">18,420 FT</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">SPEED</div>
+                <div class="metric-value" id="speed">412 KTS</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">HEADING</div>
+                <div class="metric-value" id="heading">274°</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">VERTICAL</div>
+                <div class="metric-value" id="vertical">-1240 FPM</div>
+            </div>
+
+        </div>
+
+        <div style="margin-top:12px">
+            <div class="metric-label">SIGNAL STRENGTH</div>
+
+            <div class="progress">
+                <div class="progress-bar" id="signalBar"></div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="section-title">SYSTEM TELEMETRY</div>
+
+    <div class="card">
+
+        <div class="factor">
+            <span>GPS LOCK</span>
+            <b style="color:#20d889">ACTIVE</b>
+        </div>
+
+        <div class="factor">
+            <span>ADS-B</span>
+            <b style="color:#20d889">ACTIVE</b>
+        </div>
+
+        <div class="factor">
+            <span>RADAR</span>
+            <b style="color:#20d889">CONNECTED</b>
+        </div>
+
+        <div class="factor">
+            <span>WEATHER API</span>
+            <b style="color:#20d889">ONLINE</b>
+        </div>
+
+        <div class="factor">
+            <span>AI ENGINE</span>
+            <b style="color:#20d889">RUNNING</b>
+        </div>
+
+    </div>
+
+
+    <div class="section-title">LIVE DATA FEED</div>
+
+    <div class="card feed" id="feed">
+
+        <div><span>09:18:31</span> GPS packet received</div>
+        <div><span>09:18:30</span> ADS-B telemetry updated</div>
+        <div><span>09:18:29</span> Wind vector calculated</div>
+        <div><span>09:18:28</span> Trajectory model updated</div>
+        <div><span>09:18:27</span> Search grid recalculated</div>
+
+    </div>
+
+</aside>
+
+
+<!-- MAP -->
+
+<section class="map-area">
+
+    <div id="map"></div>
+
+    <div class="map-overlay map-title">
+        <strong>🌍 GLOBAL SAR OPERATIONS MAP</strong>
+        <div>LIVE GEOINT • TRAJECTORY • PROBABILITY ANALYSIS</div>
+    </div>
+
+    <div class="map-overlay legend">
+
+        <div class="legend-title">
+            SAR PROBABILITY HEATMAP
+        </div>
+
+        <div class="gradient"></div>
+
+        <div class="legend-labels">
+            <span>LOW</span>
+            <span>MED</span>
+            <span>HIGH</span>
+            <span>CRITICAL</span>
+        </div>
+
+    </div>
+
+    <div class="map-overlay map-controls">
+
+        <button class="map-btn active" onclick="toggleLayer('heat')">
+            🌡 HEAT
+        </button>
+
+        <button class="map-btn" onclick="toggleLayer('grid')">
+            ▦ GRID
+        </button>
+
+        <button class="map-btn" onclick="resetMap()">
+            ⌖ CENTER
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- RIGHT SIDEBAR -->
+
+<aside class="sidebar right">
+
+    <div class="section-title">AI TRAJECTORY INTELLIGENCE</div>
+
+    <div class="card confidence">
+
+        <div class="confidence-number" id="confidence">
+            87.4%
+        </div>
+
+        <div class="confidence-label">
+            SEARCH PROBABILITY
+        </div>
+
+        <div class="big-progress">
+            <div id="confidenceBar"></div>
+        </div>
+
+    </div>
+
+
+    <div class="card priority">
+
+        <h3>🔴 HIGH PRIORITY ZONE</h3>
+
+        <div class="sector">
+            SECTOR C3
+        </div>
+
+        <div class="factor">
+            <span>Probability</span>
+            <b id="priorityProbability">87.4%</b>
+        </div>
+
+        <div class="factor">
+            <span>Search Radius</span>
+            <b>42.6 KM</b>
+        </div>
+
+        <div class="factor">
+            <span>Terrain Risk</span>
+            <b>HIGH</b>
+        </div>
+
+        <div class="factor">
+            <span>Recommended ETA</span>
+            <b>06:42</b>
+        </div>
+
+    </div>
+
+
+    <div class="section-title">AI EXPLANATION</div>
+
+    <div class="card">
+
+        <div class="factor">
+            <span>Trajectory Match</span>
+            <b>31%</b>
+        </div>
+
+        <div class="factor">
+            <span>Wind Drift</span>
+            <b>24%</b>
+        </div>
+
+        <div class="factor">
+            <span>Last Position</span>
+            <b>19%</b>
+        </div>
+
+        <div class="factor">
+            <span>Signal Pattern</span>
+            <b>12%</b>
+        </div>
+
+        <div class="factor">
+            <span>Terrain</span>
+            <b>8%</b>
+        </div>
+
+    </div>
+
+
+    <div class="section-title">MISSION ACTIONS</div>
+
+    <div class="card">
+
+        <button class="action primary" onclick="generateReport()">
+            📄 GENERATE SAR REPORT
+        </button>
+
+        <button class="action" onclick="startSimulation()">
+            ▶ START LIVE SIMULATION
+        </button>
+
+        <button class="action" onclick="stopSimulation()">
+            ■ PAUSE SIMULATION
+        </button>
+
+        <button class="action" onclick="whatIf()">
+            🔮 WHAT-IF SIMULATION
+        </button>
+
+        <button class="action" onclick="locateRescue()">
+            🚁 LOCATE RESCUE ASSETS
+        </button>
+
+    </div>
+
+</aside>
+
+</main>
+
+
+<footer class="footer">
+
+    <div class="footer-left">
+
+        <span id="footerLat">LAT 13.0827° N</span>
+        <span id="footerLon">LON 80.2707° E</span>
+        <span id="footerAlt">ALT 18,420 FT</span>
+        <span id="footerSpeed">SPD 412 KTS</span>
+
+    </div>
+
+    <div class="footer-right">
+
+        <span>GPS ●</span>
+        <span>ADS-B ●</span>
+        <span>RADAR ●</span>
+        <span class="health">SYSTEM HEALTH 98.2%</span>
+
+    </div>
+
+</footer>
+
+</div>
+
+
+<!-- MODAL -->
+
+<div class="modal-bg" id="modalBg">
+
+    <div class="modal">
+
+        <button class="close" onclick="closeModal()">×</button>
+
+        <h2 id="modalTitle">SAR Intelligence Report</h2>
+
+        <div class="report" id="reportContent"></div>
+
+        <button
+            class="action primary"
+            style="margin-top:15px"
+            onclick="downloadReport()"
+        >
+            💾 DOWNLOAD REPORT
+        </button>
+
+    </div>
+
+</div>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+/* ============================================================
+   SAR INTELLIGENCE ENGINE
+   ============================================================ */
+
+/* MAP */
+
+const map = L.map("map", {
+    zoomControl: true,
+    worldCopyJump: true
+}).setView([13.0827, 80.2707], 5);
+
+
+/* DARK WORLD MAP */
+
+L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap &copy; CARTO"
+    }
+).addTo(map);
+
+
+/* AIRCRAFT DATA */
+
+let aircraft = {
+    lat: 13.0827,
+    lon: 80.2707,
+    altitude: 18420,
+    speed: 412,
+    heading: 274,
+    vertical: -1240,
+    signal: 72
+};
+
+
+/* AIRCRAFT ICON */
+
+const aircraftIcon = L.divIcon({
+    className: "",
+    html: `<div class="aircraft-marker">✈</div>`,
+    iconSize: [32,32],
+    iconAnchor: [16,16]
+});
+
+
+let aircraftMarker = L.marker(
+    [aircraft.lat, aircraft.lon],
+    {icon: aircraftIcon}
+).addTo(map);
+
+aircraftMarker.bindPopup(`
+    <b>AX-204</b><br>
+    Status: CRITICAL<br>
+    SAR Mission Alpha
+`);
+
+
+/* LAST KNOWN POSITION */
+
+let lastKnown = L.circleMarker(
+    [aircraft.lat, aircraft.lon],
+    {
+        radius: 8,
+        color: "#ff3b30",
+        fillColor: "#ff3b30",
+        fillOpacity: .8
+    }
+).addTo(map);
+
+lastKnown.bindTooltip("LAST KNOWN POSITION");
+
+
+/* TRAJECTORY */
+
+let trajectoryPoints = [
+    [13.0827,80.2707],
+    [13.20,79.80],
+    [13.35,79.30],
+    [13.55,78.80],
+    [13.75,78.30],
+    [13.95,77.80]
+];
+
+let trajectory = L.polyline(
+    trajectoryPoints,
+    {
+        color: "#00e5ff",
+        weight: 3,
+        opacity: .9,
+        dashArray: "8 8"
+    }
+).addTo(map);
+
+
+/* SEARCH RADIUS */
+
+let searchRadius = L.circle(
+    [13.0827,80.2707],
+    {
+        radius: 42600,
+        color: "#ff9500",
+        weight: 1,
+        fillColor: "#ff9500",
+        fillOpacity: .04
+    }
+).addTo(map);
+
+
+/* ============================================================
+   HEATMAP
+   ============================================================ */
+
+let heatVisible = true;
+
+let heatPoints = [];
+
+function generateHeatmap() {
+
+    heatPoints.forEach(p => map.removeLayer(p));
+    heatPoints = [];
+
+    /*
+       Create probability zones around the aircraft.
+       This is a FRONTEND DEMO simulation of an AI probability engine.
+    */
+
+    const centerLat = aircraft.lat + .45;
+    const centerLon = aircraft.lon - .7;
+
+    for(let i=0;i<90;i++){
+
+        const angle = Math.random() * Math.PI * 2;
+
+        const distance =
+            Math.random() * 1.8;
+
+        const lat =
+            centerLat +
+            Math.sin(angle) * distance;
+
+        const lon =
+            centerLon +
+            Math.cos(angle) * distance;
+
+        const probability =
+            Math.max(
+                0,
+                100 - distance * 40 - Math.random()*25
+            );
+
+        let color;
+
+        if(probability > 80)
+            color = "#ff3b30";
+        else if(probability > 65)
+            color = "#ff9500";
+        else if(probability > 45)
+            color = "#ffe600";
+        else if(probability > 25)
+            color = "#20d889";
+        else
+            color = "#00e5ff";
+
+        const point = L.circle(
+            [lat,lon],
+            {
+                radius: 9000 + Math.random()*13000,
+                stroke: false,
+                fillColor: color,
+                fillOpacity: .08 + probability/900
+            }
+        ).addTo(map);
+
+        heatPoints.push(point);
+    }
+}
+
+generateHeatmap();
+
+
+/* ============================================================
+   SEARCH GRID
+   ============================================================ */
+
+let gridVisible = true;
+let gridLayers = [];
+
+function createSearchGrid(){
+
+    const startLat = 10;
+    const startLon = 77;
+
+    for(let r=0;r<4;r++){
+
+        for(let c=0;c<4;c++){
+
+            const south = startLat + r*1.5;
+            const west = startLon + c*1.5;
+
+            const bounds = [
+                [south,west],
+                [south+1.5,west+1.5]
+            ];
+
+            const letter =
+                String.fromCharCode(65+r);
+
+            const sector =
+                letter + (c+1);
+
+            const probability =
+                Math.floor(
+                    35 +
+                    Math.random()*60
+                );
+
+            const rect = L.rectangle(
+                bounds,
+                {
+                    color:
+                        probability > 75
+                        ? "#ff3b30"
+                        : "#00e5ff",
+                    weight: 1,
+                    fillOpacity: .03
+                }
+            ).addTo(map);
+
+            rect.bindTooltip(`
+                <b>SECTOR ${sector}</b><br>
+                Probability: ${probability}%<br>
+                Priority:
+                ${
+                    probability > 75
+                    ? "HIGH"
+                    : "MEDIUM"
+                }
+            `);
+
+            gridLayers.push(rect);
+        }
+    }
+}
+
+createSearchGrid();
+
+
+/* ============================================================
+   RESCUE ASSETS
+   ============================================================ */
+
+const rescueIcon = L.divIcon({
+    className: "",
+    html: `
+        <div style="
+        width:28px;
+        height:28px;
+        border-radius:50%;
+        background:rgba(32,216,137,.15);
+        border:1px solid #20d889;
+        display:grid;
+        place-items:center;
+        color:#20d889;
+        box-shadow:0 0 15px rgba(32,216,137,.4);
+        ">
+        🚁
+        </div>
+    `,
+    iconSize:[28,28],
+    iconAnchor:[14,14]
+});
+
+
+let rescueUnits = [
+
+    {
+        name:"RESCUE-01",
+        lat:13.8,
+        lon:79.5
+    },
+
+    {
+        name:"DRONE-07",
+        lat:12.2,
+        lon:81.2
+    },
+
+    {
+        name:"RESCUE-03",
+        lat:14.5,
+        lon:77.5
+    }
+
+];
+
+
+rescueUnits.forEach(unit => {
+
+    const marker = L.marker(
+        [unit.lat,unit.lon],
+        {icon:rescueIcon}
+    ).addTo(map);
+
+    marker.bindPopup(`
+        <b>${unit.name}</b><br>
+        Status: READY<br>
+        Mission: SAR Alpha
+    `);
+
+});
+
+
+/* ============================================================
+   LIVE SIMULATION
+   ============================================================ */
+
+let simulation = null;
+
+function startSimulation(){
+
+    if(simulation) return;
+
+    addFeed("LIVE simulation started");
+
+    simulation = setInterval(() => {
+
+        /* Aircraft movement */
+
+        const radians =
+            aircraft.heading *
+            Math.PI / 180;
+
+        aircraft.lat +=
+            Math.cos(radians) * .006;
+
+        aircraft.lon +=
+            Math.sin(radians) * .006;
+
+        /* Dynamic telemetry */
+
+        aircraft.altitude +=
+            aircraft.vertical / 60;
+
+        aircraft.speed +=
+            (Math.random()-.5)*5;
+
+        aircraft.heading +=
+            (Math.random()-.5)*2;
+
+        aircraft.signal +=
+            (Math.random()-.5)*4;
+
+        aircraft.signal =
+            Math.max(
+                20,
+                Math.min(
+                    100,
+                    aircraft.signal
+                )
+            );
+
+        updateUI();
+
+        aircraftMarker.setLatLng([
+            aircraft.lat,
+            aircraft.lon
+        ]);
+
+        trajectoryPoints.push([
+            aircraft.lat,
+            aircraft.lon
+        ]);
+
+        trajectory.setLatLngs(
+            trajectoryPoints
+        );
+
+        searchRadius.setLatLng([
+            aircraft.lat,
+            aircraft.lon
+        ]);
+
+        generateHeatmap();
+
+        calculateAI();
+
+    },1000);
+}
+
+
+function stopSimulation(){
+
+    clearInterval(simulation);
+
+    simulation = null;
+
+    addFeed("Simulation paused");
+
+}
+
+
+/* ============================================================
+   UI UPDATE
+   ============================================================ */
+
+function updateUI(){
+
+    document.getElementById("lat").innerText =
+        aircraft.lat.toFixed(4)+"° N";
+
+    document.getElementById("lon").innerText =
+        aircraft.lon.toFixed(4)+"° E";
+
+    document.getElementById("alt").innerText =
+        Math.round(aircraft.altitude)
+        .toLocaleString()+" FT";
+
+    document.getElementById("speed").innerText =
+        Math.round(aircraft.speed)+" KTS";
+
+    document.getElementById("heading").innerText =
+        Math.round(
+            (aircraft.heading+360)%360
+        )+"°";
+
+    document.getElementById("vertical").innerText =
+        Math.round(aircraft.vertical)+" FPM";
+
+    document.getElementById("signalBar").style.width =
+        aircraft.signal+"%";
+
+    document.getElementById("signalStatus").innerText =
+        "SIGNAL "+Math.round(aircraft.signal)+"%";
+
+
+    document.getElementById("footerLat").innerText =
+        "LAT "+aircraft.lat.toFixed(4)+"° N";
+
+    document.getElementById("footerLon").innerText =
+        "LON "+aircraft.lon.toFixed(4)+"° E";
+
+    document.getElementById("footerAlt").innerText =
+        "ALT "+Math.round(aircraft.altitude).toLocaleString()+" FT";
+
+    document.getElementById("footerSpeed").innerText =
+        "SPD "+Math.round(aircraft.speed)+" KTS";
+
+}
+
+
+/* ============================================================
+   AI PROBABILITY ENGINE
+   ============================================================ */
+
+function calculateAI(){
+
+    /*
+       Demo intelligence model.
+
+       Real backend can later replace this with:
+       trajectory physics
+       weather data
+       terrain data
+       aircraft telemetry
+       ML prediction
+    */
+
+    let probability =
+        82 +
+        Math.random()*10 -
+        (100-aircraft.signal)*.03;
+
+    probability =
+        Math.max(
+            55,
+            Math.min(
+                96,
+                probability
+            )
+        );
+
+    document.getElementById(
+        "confidence"
+    ).innerText =
+        probability.toFixed(1)+"%";
+
+    document.getElementById(
+        "priorityProbability"
+    ).innerText =
+        probability.toFixed(1)+"%";
+
+    document.getElementById(
+        "confidenceBar"
+    ).style.width =
+        probability+"%";
+}
+
+
+/* ============================================================
+   FEED
+   ============================================================ */
+
+function addFeed(message){
+
+    const feed =
+        document.getElementById("feed");
+
+    const time =
+        new Date().toLocaleTimeString(
+            [],
+            {
+                hour:"2-digit",
+                minute:"2-digit",
+                second:"2-digit"
+            }
+        );
+
+    const line =
+        document.createElement("div");
+
+    line.innerHTML =
+        `<span>${time}</span> ${message}`;
+
+    feed.prepend(line);
+
+    while(feed.children.length > 7)
+        feed.removeChild(feed.lastChild);
+}
+
+
+/* ============================================================
+   HEATMAP / GRID CONTROLS
+   ============================================================ */
+
+function toggleLayer(type){
+
+    if(type === "heat"){
+
+        heatVisible = !heatVisible;
+
+        heatPoints.forEach(
+            p => heatVisible
+                ? p.addTo(map)
+                : map.removeLayer(p)
+        );
+
+    }
+
+    if(type === "grid"){
+
+        gridVisible = !gridVisible;
+
+        gridLayers.forEach(
+            g => gridVisible
+                ? g.addTo(map)
+                : map.removeLayer(g)
+        );
+
+    }
+}
+
+
+/* ============================================================
+   CENTER MAP
+   ============================================================ */
+
+function resetMap(){
+
+    map.flyTo(
+        [aircraft.lat,aircraft.lon],
+        6,
+        {
+            duration:1.2
+        }
+    );
+
+}
+
+
+/* ============================================================
+   RESCUE ASSETS
+   ============================================================ */
+
+function locateRescue(){
+
+    map.flyTo(
+        [13.2,79.7],
+        7,
+        {
+            duration:1
+        }
+    );
+
+    addFeed(
+        "Rescue assets displayed on operational map"
+    );
+
+}
+
+
+/* ============================================================
+   WHAT IF
+   ============================================================ */
+
+function whatIf(){
+
+    const oldSignal =
+        aircraft.signal;
+
+    aircraft.signal =
+        Math.max(
+            20,
+            aircraft.signal-20
+        );
+
+    calculateAI();
+
+    addFeed(
+        "WHAT-IF: signal degradation simulated"
+    );
+
+    setTimeout(() => {
+
+        aircraft.signal =
+            oldSignal;
+
+        updateUI();
+
+        calculateAI();
+
+        addFeed(
+            "WHAT-IF scenario restored"
+        );
+
+    },5000);
+
+}
+
+
+/* ============================================================
+   EMERGENCY MODE
+   ============================================================ */
+
+function emergencyMode(){
+
+    document.body.style.boxShadow =
+        "inset 0 0 0 3px #ff3b30";
+
+    document.querySelector(
+        ".emergency-btn"
+    ).innerText =
+        "🚨 SAR ACTIVE";
+
+    addFeed(
+        "EMERGENCY SAR MODE ACTIVATED"
+    );
+
+    map.flyTo(
+        [aircraft.lat,aircraft.lon],
+        8,
+        {
+            duration:1
+        }
+    );
+
+}
+
+
+/* ============================================================
+   SAR REPORT
+   ============================================================ */
+
+let currentReport = "";
+
+
+function generateReport(){
+
+    const probability =
+        document.getElementById(
+            "confidence"
+        ).innerText;
+
+    currentReport = `
+SAR INTELLIGENCE MISSION REPORT
+================================
+
+MISSION ID:
+SAR-ALPHA-204
+
+AIRCRAFT:
+AX-204
+
+STATUS:
+CRITICAL / SEARCH ACTIVE
+
+LAST KNOWN POSITION:
+Latitude  : ${aircraft.lat.toFixed(5)} N
+Longitude : ${aircraft.lon.toFixed(5)} E
+
+ALTITUDE:
+${Math.round(aircraft.altitude).toLocaleString()} FT
+
+GROUND SPEED:
+${Math.round(aircraft.speed)} KTS
+
+HEADING:
+${Math.round(aircraft.heading)}°
+
+SIGNAL:
+${Math.round(aircraft.signal)}%
+
+AI SEARCH PROBABILITY:
+${probability}
+
+HIGH PRIORITY SEARCH ZONE:
+SECTOR C3
+
+SEARCH RADIUS:
+42.6 KM
+
+AI FACTORS:
+- Trajectory Match      31%
+- Wind Drift            24%
+- Last Known Position   19%
+- Signal Pattern        12%
+- Terrain Compatibility 08%
+
+RECOMMENDED ACTION:
+1. Deploy rescue drone.
+2. Dispatch helicopter.
+3. Search Sector C3 first.
+4. Maintain 42.6 KM search radius.
+5. Monitor signal recovery.
+
+SYSTEM:
+SAR Intelligence Engine
+
+REPORT STATUS:
+GENERATED
+`;
+
+    document.getElementById(
+        "reportContent"
+    ).innerText = currentReport;
+
+    document.getElementById(
+        "modalBg"
+    ).style.display = "flex";
+
+}
+
+
+/* ============================================================
+   DOWNLOAD REPORT
+   ============================================================ */
+
+function downloadReport(){
+
+    const blob =
+        new Blob(
+            [currentReport],
+            {
+                type:"text/plain"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+        "SAR-Intelligence-Report.txt";
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
+function closeModal(){
+
+    document.getElementById(
+        "modalBg"
+    ).style.display = "none";
+
+}
+
+
+/* ============================================================
+   UTC CLOCK
+   ============================================================ */
+
+function updateClock(){
+
+    const now = new Date();
+
+    document.getElementById(
+        "clock"
+    ).innerText =
+        now.toISOString()
+        .substring(11,19)
+        +" UTC";
+
+}
+
+setInterval(
+    updateClock,
+    1000
+);
+
+updateClock();
+
+
+/* INITIAL AI */
+
+calculateAI();
+
+addFeed(
+    "SAR Intelligence Engine initialized"
+);
+
+addFeed(
+    "World GIS map loaded"
+);
+
+addFeed(
+    "AI probability heatmap generated"
+);
+
+addFeed(
+    "Aircraft AX-204 telemetry connected"
+);
+
+</script>
+
+</body>
+</html>
